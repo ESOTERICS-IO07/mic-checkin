@@ -1,0 +1,11 @@
+-- Organizer accounts are not created via the public signup form.
+--
+-- After creating an auth user in the Supabase dashboard (Authentication → Users),
+-- promote that user with SQL run as the database owner (SQL editor):
+--
+--   UPDATE public.profiles
+--   SET role = 'ORGANIZER'
+--   WHERE id = '<auth user uuid>';
+--
+-- The protect_profile_role trigger allows this because auth.uid() is NULL
+-- in the SQL editor. Authenticated clients cannot change their own role.
