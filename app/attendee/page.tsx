@@ -54,6 +54,18 @@ export default async function AttendeeHomePage() {
           </dl>
         </Card>
 
+        {/* My Tickets shortcut */}
+        <Link
+          href="/attendee/tickets"
+          className="flex items-center justify-between rounded-xl border border-zinc-200 bg-white px-5 py-4 shadow-sm hover:bg-zinc-50 transition-colors"
+        >
+          <div>
+            <p className="font-semibold text-zinc-900">My Tickets</p>
+            <p className="mt-0.5 text-xs text-zinc-500">View your registrations</p>
+          </div>
+          <span className="text-zinc-400">→</span>
+        </Link>
+
         <div className="space-y-4">
           <h2 className="text-lg font-semibold">Available Events</h2>
           {eventsError && (
@@ -66,13 +78,6 @@ export default async function AttendeeHomePage() {
             <EventList events={events} initialRegisteredIds={registeredIds} />
           )}
         </div>
-
-        <p className="text-center text-xs text-zinc-500">
-          <Link href="/organizer" className="underline">
-            Open organizer route
-          </Link>{" "}
-          (server returns 403 for attendees)
-        </p>
       </main>
     </div>
   );
