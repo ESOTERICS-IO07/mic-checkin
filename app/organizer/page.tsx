@@ -81,6 +81,12 @@ export default async function OrganizerHomePage() {
                         <span className="font-medium text-zinc-800">{remaining}</span>
                       </div>
                     </div>
+                    <Link
+                      href={`/organizer/check-in?eventId=${event.id}`}
+                      className="mt-3 block w-full rounded-md bg-zinc-900 px-4 py-2 text-center text-sm font-medium text-white hover:bg-zinc-800"
+                    >
+                      Check-in attendees
+                    </Link>
                   </Card>
                 );
               })}

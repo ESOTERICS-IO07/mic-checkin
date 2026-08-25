@@ -189,6 +189,14 @@ export type Database = {
         Returns: string;
       };
 
+      check_in_ticket: {
+        Args: {
+          p_event_id: string;
+          p_token_hash: string;
+        };
+        Returns: string;
+      };
+
       create_event: {
         Args: {
           p_name: string;

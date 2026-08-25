@@ -10,7 +10,8 @@ REVOKE INSERT, UPDATE ON public.events FROM authenticated;
 ALTER TABLE public.events ALTER COLUMN organizer_id SET DEFAULT auth.uid();
 
 -- 2. Grant column-level INSERT and UPDATE privileges to authenticated role on allowed columns only
-GRANT INSERT (name, starts_at, capacity) ON public.events TO authenticated;
+GRANT INSERT (organizer_id, name, starts_at, capacity)
+ON public.events TO authenticated;
 GRANT UPDATE (name, starts_at, capacity) ON public.events TO authenticated;
 
 -- 3. Redefine register_for_event to remove the GUC session variable bypass mechanism
