@@ -1,4 +1,4 @@
-# MIC Check-in
+# EMS Check-in System
 
 Event check-in PWA (MIC Development Department recruitment task).
 
