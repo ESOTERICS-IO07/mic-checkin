@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireRole } from "@/lib/auth/require-role";
+import { requireAuth } from "@/lib/auth/require-role";
 import { createClient } from "@/lib/supabase/server";
 
 type CheckInRequest = {
@@ -9,7 +9,7 @@ type CheckInRequest = {
 
 export async function POST(request: Request) {
     try {
-        await requireRole("ORGANIZER");
+        const auth = await requireAuth();
 
         const body = (await request.json()) as CheckInRequest;
 
@@ -33,6 +33,37 @@ export async function POST(request: Request) {
         }
 
         const supabase = await createClient();
+
+        if (auth.profile.role !== "ORGANIZER") {
+            const { data: staffData } = await supabase
+                .from("event_staff")
+                .select("id")
+                .eq("event_id", body.eventId)
+                .eq("user_id", auth.user.id)
+                .eq("role", "SCANNER")
+                .maybeSingle();
+
+            if (!staffData) {
+                return NextResponse.json(
+                    { error: "Forbidden: You are not assigned to scan for this event." },
+                    { status: 403 }
+                );
+            }
+        } else {
+            const { data: eventData } = await supabase
+                .from("events")
+                .select("id")
+                .eq("id", body.eventId)
+                .eq("organizer_id", auth.user.id)
+                .maybeSingle();
+
+            if (!eventData) {
+                return NextResponse.json(
+                    { error: "Forbidden: You do not own this event." },
+                    { status: 403 }
+                );
+            }
+        }
 
         const tokenHash = `\\x${body.tokenHash.toLowerCase()}`;
 

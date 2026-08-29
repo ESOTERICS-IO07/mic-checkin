@@ -150,7 +150,7 @@ export default async function EventDashboardPage({
 
                         <div className="flex gap-3 border-t border-zinc-100 pt-4">
                             <Link
-                                href={`/organizer/events/${event.id}/check-in`}
+                                href={`/organizer/check-in?eventId=${event.id}`}
                                 className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800"
                             >
                                 Open Check-in

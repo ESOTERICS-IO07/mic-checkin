@@ -94,7 +94,7 @@ export function EventCard({ event }: EventCardProps) {
                 {/* Actions */}
                 <div className="flex gap-2 border-t border-zinc-100 pt-4">
                     <Link
-                        href={`/organizer/events/${event.id}/check-in`}
+                        href={`/organizer/check-in?eventId=${event.id}`}
                         className="flex-1 rounded-md bg-zinc-900 px-4 py-2 text-center text-sm font-medium text-white hover:bg-zinc-800"
                     >
                         Open Check-in

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireRole } from "@/lib/auth/require-role";
+import { requireAuth } from "@/lib/auth/require-role";
 import { createClient } from "@/lib/supabase/server";
 import { QRScanner } from "@/components/organizer/qr-scanner";
 
@@ -12,7 +12,7 @@ type CheckInPageProps = {
 export default async function CheckInPage({
     searchParams,
 }: CheckInPageProps) {
-    const auth = await requireRole("ORGANIZER");
+    const auth = await requireAuth();
     const params = await searchParams;
     const eventId = params.eventId;
 
@@ -39,30 +39,63 @@ export default async function CheckInPage({
         );
     }
 
-    const { data: event, error } = await supabase
-        .from("events")
-        .select("id, name, starts_at, capacity, registration_count")
-        .eq("id", eventId)
-        .eq("organizer_id", auth.user.id)
-        .single();
+    let hasAccess = false;
+    let event = null;
 
-    if (error || !event) {
+    if (auth.profile.role === "ORGANIZER") {
+        const { data, error } = await supabase
+            .from("events")
+            .select("id, name, starts_at, capacity, registration_count")
+            .eq("id", eventId)
+            .eq("organizer_id", auth.user.id)
+            .maybeSingle();
+        
+        if (!error && data) {
+            hasAccess = true;
+            event = data;
+        }
+    } else {
+        const { data: staffData } = await supabase
+            .from("event_staff")
+            .select("id")
+            .eq("event_id", eventId)
+            .eq("user_id", auth.user.id)
+            .eq("role", "SCANNER")
+            .maybeSingle();
+
+        if (staffData) {
+            hasAccess = true;
+            const { data, error } = await supabase
+                .from("events")
+                .select("id, name, starts_at, capacity, registration_count")
+                .eq("id", eventId)
+                .maybeSingle();
+            
+            if (!error && data) {
+                event = data;
+            } else {
+                hasAccess = false;
+            }
+        }
+    }
+
+    if (!hasAccess || !event) {
         return (
             <main className="mx-auto w-full max-w-2xl px-6 py-10">
                 <div className="rounded-lg border border-red-200 bg-red-50 p-6">
                     <h1 className="text-xl font-bold text-red-800">
-                        Event not found
+                        Event not found or access denied
                     </h1>
 
                     <p className="mt-2 text-red-700">
-                        You can only check in attendees for your own events.
+                        You can only check in attendees if you are the organizer or an assigned scanner.
                     </p>
 
                     <Link
-                        href="/organizer"
+                        href={auth.profile.role === "ORGANIZER" ? "/organizer" : "/scanner"}
                         className="mt-6 inline-block font-medium underline"
                     >
-                        ← Back to organizer
+                        ← Back to dashboard
                     </Link>
                 </div>
             </main>
@@ -73,10 +106,10 @@ export default async function CheckInPage({
         <main className="mx-auto w-full max-w-2xl px-6 py-10">
             <div className="mb-6">
                 <Link
-                    href="/organizer"
+                    href={auth.profile.role === "ORGANIZER" ? "/organizer" : "/scanner"}
                     className="text-sm font-medium text-zinc-600 underline"
                 >
-                    ← Back to organizer
+                    ← Back to dashboard
                 </Link>
             </div>
 
