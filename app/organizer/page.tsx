@@ -1,101 +1,172 @@
 import Link from "next/link";
+
 import { AppHeader } from "@/components/auth/app-header";
 import { ForbiddenState } from "@/components/auth/forbidden-state";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { loadRolePage } from "@/lib/auth/require-role";
 import { createClient } from "@/lib/supabase/server";
+
 import { CreateEventForm } from "@/components/organizer/create-event-form";
+import { EventCard } from "@/components/organizer/event-card";
+import { StatCard } from "@/components/organizer/stat-card";
 
 export default async function OrganizerHomePage() {
   const { auth, forbidden } = await loadRolePage("ORGANIZER");
 
   if (forbidden) {
     return (
-      <ForbiddenState requiredRole="ORGANIZER" actualRole={auth.profile.role} />
+      <ForbiddenState
+        requiredRole="ORGANIZER"
+        actualRole={auth.profile.role}
+      />
     );
   }
 
   const supabase = await createClient();
+
   const { data: events, error } = await supabase
     .from("events")
     .select("*")
     .eq("organizer_id", auth.user.id)
     .order("starts_at", { ascending: true });
 
+  /*
+   * The events query is enough to calculate the overview
+   * metrics that Phase E1 needs.
+   */
+  const totalEvents = events?.length ?? 0;
+
+  const totalCapacity =
+    events?.reduce(
+      (sum, event) => sum + event.capacity,
+      0,
+    ) ?? 0;
+
+  const totalRegistered =
+    events?.reduce(
+      (sum, event) => sum + event.registration_count,
+      0,
+    ) ?? 0;
+
   return (
     <div className="min-h-full">
       <AppHeader auth={auth} />
-      <main className="mx-auto max-w-lg space-y-6 px-4 py-6">
+
+      <main className="mx-auto max-w-4xl space-y-6 px-4 py-6">
+        {/* Organizer identity */}
         <Card>
           <CardHeader>
-            <CardTitle>Organizer Home</CardTitle>
+            <CardTitle>Organizer Dashboard</CardTitle>
+
             <CardDescription>
-              Manage your events and track attendee capacities.
+              Manage your events and monitor registrations.
             </CardDescription>
           </CardHeader>
-          <dl className="space-y-2 text-sm">
-            <div className="flex justify-between gap-4">
-              <dt className="text-zinc-500">Email</dt>
-              <dd>{auth.user.email}</dd>
-            </div>
-            <div className="flex justify-between gap-4">
-              <dt className="text-zinc-500">Role</dt>
-              <dd>{auth.profile.role}</dd>
-            </div>
-          </dl>
+
+          <div className="px-6 pb-6">
+            <dl className="space-y-2 text-sm">
+              <div className="flex justify-between gap-4">
+                <dt className="text-zinc-500">
+                  Email
+                </dt>
+
+                <dd>{auth.user.email}</dd>
+              </div>
+
+              <div className="flex justify-between gap-4">
+                <dt className="text-zinc-500">
+                  Role
+                </dt>
+
+                <dd>{auth.profile.role}</dd>
+              </div>
+            </dl>
+          </div>
         </Card>
 
-        {/* Event Creation Form */}
+        {/* Overview statistics */}
+        <section>
+          <div className="mb-3">
+            <h2 className="text-lg font-semibold">
+              Overview
+            </h2>
+
+            <p className="text-sm text-zinc-500">
+              Your event activity at a glance.
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <StatCard
+              label="Events"
+              value={totalEvents}
+              description="Events you organize"
+            />
+
+            <StatCard
+              label="Capacity"
+              value={totalCapacity}
+              description="Total available seats"
+            />
+
+            <StatCard
+              label="Registered"
+              value={totalRegistered}
+              description="Total registrations"
+            />
+          </div>
+        </section>
+
+        {/* Create event */}
         <CreateEventForm />
 
-        {/* Owned Events List */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Your Events</h2>
-          {error && (
-            <p className="text-sm text-red-600">Failed to load events: {error.message}</p>
-          )}
+        {/* Events */}
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold">
+              Your Events
+            </h2>
+
+            <p className="text-sm text-zinc-500">
+              Manage registration and check-in for your events.
+            </p>
+          </div>
+
+          {error ? (
+            <p className="text-sm text-red-600">
+              Failed to load events: {error.message}
+            </p>
+          ) : null}
+
           {!error && (!events || events.length === 0) ? (
-            <p className="text-sm text-zinc-500">No events created yet.</p>
+            <Card>
+              <div className="p-8 text-center">
+                <p className="font-medium text-zinc-900">
+                  No events yet
+                </p>
+
+                <p className="mt-1 text-sm text-zinc-500">
+                  Create your first event above.
+                </p>
+              </div>
+            </Card>
           ) : (
             <div className="space-y-3">
-              {events?.map((event) => {
-                const remaining = event.capacity - event.registration_count;
-                return (
-                  <Card key={event.id} className="p-4 space-y-2">
-                    <div className="flex justify-between items-start">
-                      <h3 className="font-semibold text-zinc-900">{event.name}</h3>
-                      <span className="text-xs font-medium px-2 py-0.5 rounded bg-zinc-100 text-zinc-800">
-                        Cap: {event.capacity}
-                      </span>
-                    </div>
-                    <p className="text-xs text-zinc-500">
-                      Starts: {new Date(event.starts_at).toLocaleString()}
-                    </p>
-                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-zinc-100 text-xs">
-                      <div>
-                        <span className="text-zinc-500">Registered:</span>{" "}
-                        <span className="font-medium text-zinc-800">{event.registration_count}</span>
-                      </div>
-                      <div>
-                        <span className="text-zinc-500">Remaining:</span>{" "}
-                        <span className="font-medium text-zinc-800">{remaining}</span>
-                      </div>
-                    </div>
-                    <Link
-                      href={`/organizer/check-in?eventId=${event.id}`}
-                      className="mt-3 block w-full rounded-md bg-zinc-900 px-4 py-2 text-center text-sm font-medium text-white hover:bg-zinc-800"
-                    >
-                      Check-in attendees
-                    </Link>
-                  </Card>
-                );
-              })}
+              {events?.map((event) => (
+                <EventCard
+                  key={event.id}
+                  event={event}
+                />
+              ))}
             </div>
           )}
-        </div>
+        </section>
 
         <p className="text-center text-xs text-zinc-500">
-          <Link href="/attendee" className="underline">
+          <Link
+            href="/attendee"
+            className="underline"
+          >
             Open attendee route
           </Link>{" "}
           (server returns 403 for organizers)
@@ -104,4 +175,3 @@ export default async function OrganizerHomePage() {
     </div>
   );
 }
-

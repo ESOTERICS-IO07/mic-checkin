@@ -105,6 +105,33 @@ export type Database = {
         };
         Relationships: [];
       };
+      event_staff: {
+        Row: {
+          id: string;
+          event_id: string;
+          user_id: string;
+          role: "SCANNER";
+          created_at: string;
+        };
+
+        Insert: {
+          id?: string;
+          event_id: string;
+          user_id: string;
+          role?: "SCANNER";
+          created_at?: string;
+        };
+
+        Update: {
+          id?: string;
+          event_id?: string;
+          user_id?: string;
+          role?: "SCANNER";
+          created_at?: string;
+        };
+
+        Relationships: [];
+      };
       check_in_events: {
         Row: {
           id: string;
@@ -185,6 +212,13 @@ export type Database = {
           p_event_id: string;
           p_token_hash: string;
           p_token_lookup_prefix: string;
+        };
+        Returns: string;
+      };
+      add_event_scanner: {
+        Args: {
+          p_event_id: string;
+          p_email: string;
         };
         Returns: string;
       };
