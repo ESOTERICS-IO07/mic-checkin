@@ -1,6 +1,6 @@
 # EMS Check-in System
 
-Event check-in PWA (MIC Development Department recruitment task).
+Event check-in PWA (EMS Development Department recruitment task).
 
 Phase A is foundation only: Next.js App Router, Supabase Auth, profiles/RBAC, RLS, and four proof pages.
 
